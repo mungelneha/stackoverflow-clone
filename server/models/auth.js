@@ -10,12 +10,50 @@ const userschema = mongoose.Schema({
     type: String,
     required: true,
   },
+  phone: {
+    type: String,
+    required: true,
+    unique: true,
+    sparse: true,
+  },
 
   password: {
     type: String,
     required: true,
   },
 
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
+
+  status: {
+    type: String,
+    enum: ["Active", "Blocked","Suspended"],
+    default: "Active",
+  },
+
+  language: {
+    type: String,
+    enum: ["en", "es", "hi", "pt", "zh", "fr"],
+    default: "en",
+  },
+  reputation: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+
+  profileCompleted: {
+    type: Boolean,
+    default: false,
+  },
+
+  profileCompletionRewardGiven: {
+    type: Boolean,
+    default: false,
+},
   about: {
     type: String,
     default: "",
@@ -63,6 +101,41 @@ const userschema = mongoose.Schema({
       },
     },
   },
+  followers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    }
+  ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+    }
+  ],
+  lastForgotPasswordRequest: {
+    type: Date,
+    default: null,
+  },
+  frenchOtp: {
+    type: String,
+    default: null,
+  },
+
+  frenchOtpExpires: {
+    type: Date,
+    default: null,
+  },
+  mobileOtp: {
+    type: String,
+    default: null,
+  },
+
+  mobileOtpExpires: {
+    type: Date,
+    default: null,
+  },
 });
+
 
 export default mongoose.model("user", userschema);

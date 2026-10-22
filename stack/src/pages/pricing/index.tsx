@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/lib/axiosinstance";
 import { loadStripe } from "@stripe/stripe-js";
+import { useTranslations } from "next-intl";
 
 export default function PricingPage() {
+  const t = useTranslations("Pricing");
+
   const [plans, setPlans] = useState([]);
 
   useEffect(() => {
@@ -17,17 +20,20 @@ export default function PricingPage() {
       console.log(error);
     }
   };
+
   const [currentPlan, setCurrentPlan] = useState("Free");
 
   useEffect(() => {
     getPlans();
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const user = JSON.parse(
+      localStorage.getItem("user") || "{}"
+    );
 
     if (user?.subscription?.plan) {
       setCurrentPlan(user.subscription.plan);
     }
-}, []);
+  }, []);
 
   const makePayment = async (plan: any) => {
     try {
@@ -35,7 +41,9 @@ export default function PricingPage() {
         process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
       );
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const user = JSON.parse(
+        localStorage.getItem("user") || "{}"
+      );
 
       const res = await axiosInstance.post(
         "/payment/create-checkout-session",
@@ -59,7 +67,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-gray-100 py-10">
       <h1 className="text-4xl font-bold text-center mb-10">
-        Subscription Plans
+        {t("subscriptionPlans")}
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 px-10">
@@ -77,18 +85,22 @@ export default function PricingPage() {
             </h3>
 
             <p className="text-center">
-              Questions / Day :{" "}
+              {t("questionsPerDay")} :{" "}
               {plan.questionLimit >= 999999
-                ? "Unlimited"
+                ? t("unlimited")
                 : plan.questionLimit}
             </p>
 
-            <p className="font-semibold mt-5 mb-2">Features</p>
+            <p className="font-semibold mt-5 mb-2">
+              {t("features")}
+            </p>
 
             <ul className="list-disc ml-5">
-              {plan.features.map((feature: string, index: number) => (
-                <li key={index}>{feature}</li>
-              ))}
+              {plan.features.map(
+                (feature: string, index: number) => (
+                  <li key={index}>{feature}</li>
+                )
+              )}
             </ul>
 
             <button
@@ -100,7 +112,9 @@ export default function PricingPage() {
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
             >
-              {plan.planName === currentPlan ? "Current Plan" : "Upgrade"}
+              {plan.planName === currentPlan
+                ? t("currentPlan")
+                : t("upgrade")}
             </button>
           </div>
         ))}

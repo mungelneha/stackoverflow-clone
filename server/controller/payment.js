@@ -21,28 +21,22 @@ const transporter = nodemailer.createTransport({
 export const createCheckoutSession = async (req, res) => {
   try {
     const { planName, price, userId} = req.body;
-
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-
       mode: "payment",
       metadata: {
         userId,
         planName,
       },
-
       line_items: [
         {
           price_data: {
             currency: "inr",
-
             product_data: {
               name: `${planName} Subscription`,
             },
-
             unit_amount: price * 100,
           },
-
           quantity: 1,
         },
       ],
@@ -50,7 +44,6 @@ export const createCheckoutSession = async (req, res) => {
         "http://localhost:3000/payment-success?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "http://localhost:3000/pricing",
     });
-
     res.status(200).json({
       id: session.id,
     });
@@ -151,35 +144,25 @@ export const verifyPayment = async (req, res) => {
 export const downloadInvoice = async (req, res) => {
   try {
     const { paymentId } = req.params;
-
     const invoice = await Invoice.findOne({ paymentId });
-
     if (!invoice) {
       return res.status(404).json({
         message: "Invoice not found",
       });
     }
-
     const doc = new PDFDocument();
-
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename=${invoice.invoiceNumber}.pdf`
     );
-
     doc.pipe(res);
-
     doc.fontSize(22).text("Stack Overflow Clone", {
       align: "center",
     });
-
     doc.moveDown();
-
     doc.fontSize(18).text("Invoice");
-
     doc.moveDown();
-
     doc.fontSize(14).text(`Invoice Number : ${invoice.invoiceNumber}`);
     doc.text(`Plan : ${invoice.planName}`);
     doc.text(`Amount : ₹${invoice.amount}`);
@@ -187,11 +170,9 @@ export const downloadInvoice = async (req, res) => {
     doc.text(
       `Date : ${new Date(invoice.invoiceDate).toLocaleDateString()}`
     );
-
     doc.end();
   } catch (error) {
     console.log(error);
-
     res.status(500).json({
       message: "Invoice Download Failed",
     });

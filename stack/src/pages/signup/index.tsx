@@ -14,20 +14,33 @@ import { useAuth } from "@/lib/AuthContext";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
+import { useTranslations } from "next-intl";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const t = useTranslations("SignUp");
+
   const { Signup, loading } = useAuth();
-  const [form, setform] = useState({ name: "", email: "", password: "" });
+
+  const [form, setform] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
+
   const handleChange = (e: any) => {
     setform({ ...form, [e.target.id]: e.target.value });
   };
+
   const handlesubmit = async (e: any) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password) {
-      toast.error("ALL Fields are required");
+
+    if (!form.name || !form.email || !form.phone || !form.password) {
+      toast.error(t("allFieldsRequired"));
       return;
     }
+
     try {
       await Signup(form);
       router.push("/");
@@ -35,6 +48,7 @@ export default function SignUpPage() {
       console.log(error);
     }
   };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -45,21 +59,25 @@ export default function SignUpPage() {
                 <div className="w-3 h-3 lg:w-4 lg:h-4 bg-orange-500 rounded-sm"></div>
               </div>
             </div>
+
             <span className="text-lg lg:text-xl font-bold text-gray-800">
               stack<span className="font-normal">overflow</span>
             </span>
           </Link>
         </div>
+
         <form onSubmit={handlesubmit}>
           <Card>
             <CardHeader className="space-y-1 text-center">
               <CardTitle className="text-xl lg:text-2xl">
-                Create your account
+                {t("createAccount")}
               </CardTitle>
+
               <CardDescription>
-                Join the Stack Overflow community
+                {t("joinCommunity")}
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
               <Button
                 variant="outline"
@@ -83,7 +101,8 @@ export default function SignUpPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Sign up with Google
+
+                {t("signUpWithGoogle")}
               </Button>
 
               <Button
@@ -101,35 +120,40 @@ export default function SignUpPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Sign up with GitHub
+
+                {t("signUpWithGithub")}
               </Button>
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
                 </div>
+
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-muted-foreground">
-                    Or continue with
+                    {t("orContinueWith")}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm">
-                  Display name
+                  {t("displayName")}
                 </Label>
+
                 <Input
                   id="name"
-                  placeholder="Enter your display name"
+                  placeholder={t("enterDisplayName")}
                   value={form.name}
                   onChange={handleChange}
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm">
-                  Email
+                  {t("email")}
                 </Label>
+
                 <Input
                   id="email"
                   type="email"
@@ -138,32 +162,61 @@ export default function SignUpPage() {
                   onChange={handleChange}
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm">
+                  {t("phoneNumber")}
+                </Label>
+
+                <Input
+                  id="phone"
+                  type="text"
+                  placeholder={t("enterPhoneNumber")}
+                  value={form.phone}
+                  onChange={handleChange}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm">
-                  Password
+                  {t("password")}
                 </Label>
+
                 <Input
                   id="password"
                   type="password"
                   value={form.password}
                   onChange={handleChange}
                 />
+
                 <p className="text-xs text-gray-600">
-                  Passwords must contain at least eight characters, including at
-                  least 1 letter and 1 number.
+                  {t("passwordRequirements")}
                 </p>
               </div>
 
               <div className="flex items-start space-x-2">
                 <Checkbox id="terms" className="mt-1" />
-                <Label htmlFor="terms" className="text-sm leading-relaxed">
-                  I agree to the{" "}
-                  <Link href="#" className="text-blue-600 hover:underline">
-                    Terms of Service
+
+                <Label
+                  htmlFor="terms"
+                  className="text-sm leading-relaxed"
+                >
+                  {t("agreeTo")}{" "}
+
+                  <Link
+                    href="#"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {t("termsOfService")}
                   </Link>{" "}
-                  and{" "}
-                  <Link href="#" className="text-blue-600 hover:underline">
-                    Privacy Policy
+
+                  {t("and")}{" "}
+
+                  <Link
+                    href="#"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {t("privacyPolicy")}
                   </Link>
                 </Label>
               </div>
@@ -172,13 +225,17 @@ export default function SignUpPage() {
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-sm"
               >
-                {loading ? "Signing up.." : "Sign up"}
+                {loading ? t("signingUp") : t("signUp")}
               </Button>
 
               <div className="text-center text-sm">
-                Already have an account?{" "}
-                <Link href="/login" className="text-blue-600 hover:underline">
-                  Log in
+                {t("alreadyHaveAccount")}{" "}
+
+                <Link
+                  href="/auth"
+                  className="text-blue-600 hover:underline"
+                >
+                  {t("logIn")}
                 </Link>
               </div>
             </CardContent>

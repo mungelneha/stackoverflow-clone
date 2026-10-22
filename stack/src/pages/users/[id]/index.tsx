@@ -17,39 +17,164 @@ import { useAuth } from "@/lib/AuthContext";
 import axiosInstance from "@/lib/axiosinstance";
 import { Calendar, Edit, Plus, X } from "lucide-react";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useRef } from "react";
 import { toast } from "react-toastify";
 
 const index = () => {
   const { user } = useAuth();
   const router = useRouter();
+  const postId = router.query.postId as string;  
   const { id } = router.query;
+  const profileId = Array.isArray(id) ? id[0] : id;
+  const currentUserId = user?._id;
+  const isOwnProfile = profileId === currentUserId;
   const [users, setusers] = useState<any>(null);
+  const [reputationHistory, setReputationHistory] = useState<any[]>([]);
+  const [reputationLoading, setReputationLoading] = useState(false);
   const [loading, setloading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<{
     name: string;
     about: string;
     tags: string[];
+    language: string;
   }>({
     name: "",
     about: "",
     tags: [],
+    language: "en",
   });
   const [newTag, setNewTag] = useState("");
   const [payments, setPayments] = useState<any[]>([]);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const postRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const [activePostId, setActivePostId] = useState("");
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [openFollowers, setOpenFollowers] = useState(false);
+  const [openFollowing, setOpenFollowing] = useState(false);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const [notificationType, setNotificationType] = useState<string | null>(null);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (postId) {
+      setActivePostId(postId);
+      setHighlightPostId(postId);
+    }
+  }, [postId]);
+  const fetchReputationHistory = async () => {
+    try {
+      setReputationLoading(true);
 
+      const res = await axiosInstance.get(
+        `/api/reputation-history/${profileId}`
+      );
+
+      setReputationHistory(res.data.history || []);
+    } catch (error) {
+      console.log("Reputation History Error:", error);
+    } finally {
+      setReputationLoading(false);
+    }
+  };
+  const fetchFollowersFollowing = async () => {
+    try {
+      const res = await axiosInstance.get(`/user/followers/${profileId}`);
+
+      setFollowers(res.data.followers);
+      setFollowing(res.data.following);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchActiveSessions = async () => {
+    try {
+      setSessionsLoading(true);
+
+      const res = await axiosInstance.get("/user/sessions");
+
+      setActiveSessions(res.data.data || []);
+    } catch (error) {
+      console.log("Active Sessions Error:", error);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+  const fetchUserPosts = async () => {
+    try {
+      const res = await axiosInstance.get("/post/all");
+      const allPosts = res.data.data || [];
+
+      const filteredPosts = allPosts.filter(
+        (post: any) =>
+          post.userId === profileId || post.userId?._id === profileId
+      );
+
+      setUserPosts(filteredPosts);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (postId && postRefs.current[postId as string]) {
+      postRefs.current[postId as string]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [postId, userPosts]);
+
+  useEffect(() => {
+    if (router.query.type) {
+      setNotificationType(router.query.type as string);
+    }
+  }, [router.query.type]);
+
+  useEffect(() => {
+    if (router.query.commentId) {
+      setHighlightCommentId(router.query.commentId as string);
+    }
+  }, [router.query.commentId]);
+
+  useEffect(() => {
+    if (!router.isReady || userPosts.length === 0) return;
+
+    const { postId } = router.query;
+
+    if (postId) {
+      setTimeout(() => {
+        const element = document.getElementById(postId as string);
+
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }
+      }, 300);
+    }
+  }, [router.isReady, router.query, userPosts]);
   useEffect(() => {
     const fetchuser = async () => {
       try {
         const res = await axiosInstance.get("/user/getalluser");
-        const matcheduser = res.data.data.find((u: any) => u._id === id);
+        const matcheduser = res.data.data.find(
+          (u: any) => u._id === profileId
+        );
         setusers(matcheduser);
         if (matcheduser) {
           setEditForm({
             name: matcheduser.name || "",
             about: matcheduser.about || "",
             tags: matcheduser.tags || [],
+            language: matcheduser.language || "en",
           });
         }
       } catch (error) {
@@ -61,17 +186,24 @@ const index = () => {
     fetchuser();
     const fetchPayments = async () => {
     try {
-      const res = await axiosInstance.get(`/payment/history/${id}`);
+      const res = await axiosInstance.get(`/payment/history/${profileId}`);
       setPayments(res.data.data);
     } catch (error) {
       console.log(error);
     }
   };
-
-  if (id) {
+  
+  if (profileId) {
     fetchPayments();
+    fetchUserPosts();
+    fetchFollowersFollowing();
+    fetchReputationHistory();
+
+    if (isOwnProfile) {
+      fetchActiveSessions();
+    }
   }
-  }, [id]);
+  }, [id, currentUserId]);
   if (loading) {
     return (
       <Mainlayout>
@@ -92,7 +224,12 @@ const index = () => {
   const handleSaveProfile = async () => {
     try {
       const res = await axiosInstance.patch(`/user/update/${user?._id}`, {
-        editForm,
+        editForm: {
+          name: editForm.name,
+          about: editForm.about,
+          tags: editForm.tags,
+          language: editForm.language,
+        },
       });
       if (res.data.data) {
         const updatedUser = {
@@ -100,6 +237,7 @@ const index = () => {
           name: editForm.name,
           about: editForm.about,
           tags: editForm.tags,
+          language: editForm.language,
         };
 
         setusers(updatedUser);
@@ -127,8 +265,52 @@ const index = () => {
     });
   };
 
-  const currentUserId = user?._id;
-  const isOwnProfile = id === currentUserId;
+  const handleFollow = async () => {
+    try {
+      console.log("Before API");
+
+      const res = await axiosInstance.patch("/user/follow", {
+        currentUserId,
+        targetUserId: profileId,
+      });
+
+      console.log("After API");
+      console.log(res.data);
+      const updatedUser = await axiosInstance.get("/user/getalluser");
+
+      const matchedUser = updatedUser.data.data.find(
+        (u: any) => u._id === profileId
+      );
+
+      setusers(matchedUser);
+    } catch (error: any) {
+      console.log("Catch");
+      console.log(error);
+      console.log(error.response);
+    }
+  };
+  const handleRevokeSession = async (sessionId: string) => {
+    try {
+      const res = await axiosInstance.patch(
+        `/user/sessions/${sessionId}/revoke`
+      );
+
+      if (res.data.success) {
+        setActiveSessions((prev) =>
+          prev.filter((session) => session.sessionId !== sessionId)
+        );
+
+        toast.success("Session revoked successfully");
+      }
+    } catch (error: any) {
+      console.log("Revoke Session Error:", error);
+
+      toast.error(
+        error.response?.data?.message || "Failed to revoke session"
+      );
+    }
+  };
+  
   return (
     <Mainlayout>
       <div className="max-w-6xl">
@@ -150,7 +332,75 @@ const index = () => {
                   {users.name}
                 </h1>
               </div>
+              {!isOwnProfile && (
+                <Button
+                  onClick={handleFollow}
+                  className="mt-3"
+                >
+                 {users.followers?.some(
+                  (id: any) => id.toString() === currentUserId?.toString()
+                )
+                  ? "Unfollow"
+                  : "Follow"}
+                </Button>
+              )}
 
+              <div className="flex gap-6 mt-3 text-sm text-gray-600">
+                <span
+                  className="cursor-pointer hover:text-blue-600"
+                  onClick={() => setOpenFollowers(true)}
+                >
+                  <b>{users.followers?.length || 0}</b> Followers
+                </span>
+
+                <span
+                  className="cursor-pointer hover:text-blue-600"
+                  onClick={() => setOpenFollowing(true)}
+                >
+                  <b>{users.following?.length || 0}</b> Following
+                </span>
+              </div>
+              <Dialog open={openFollowers} onOpenChange={setOpenFollowers}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Followers</DialogTitle>
+                  </DialogHeader>
+
+                  {followers.length === 0 ? (
+                    <p>No Followers</p>
+                  ) : (
+                    followers.map((f: any) => (
+                      <div key={f._id}>
+                        {f.name}
+                      </div>
+                    ))
+                  )}
+                </DialogContent>
+              </Dialog>
+              <Dialog open={openFollowing} onOpenChange={setOpenFollowing}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Following</DialogTitle>
+                  </DialogHeader>
+
+                  {following.length === 0 ? (
+                    <p>Not Following Anyone</p>
+                  ) : (
+                    following.map((f: any) => (
+                      <div
+                        key={f._id}
+                        className="cursor-pointer hover:bg-gray-100 p-2 rounded"
+                        onClick={() => {
+                          setOpenFollowing(false);
+                          router.push(`/users/${f._id}`);
+                        }}
+                      >
+                        {f.name}
+                      </div>
+                    ))
+                  )}
+                </DialogContent>
+              </Dialog>
               {isOwnProfile && (
                 <Dialog open={isEditing} onOpenChange={setIsEditing}>
                   <DialogTrigger asChild>
@@ -285,6 +535,15 @@ const index = () => {
                 {new Date(users.joinDate).toISOString().split("T")[0]}
               </div>
             </div>
+            <div className="mb-4">
+              <span className="text-sm text-gray-600">
+                Reputation
+              </span>
+
+              <div className="text-2xl font-bold text-gray-800">
+                {users.reputation || 0}
+              </div>
+            </div>
             <div className="flex flex-wrap items-center space-x-6 text-sm">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
@@ -347,7 +606,7 @@ const index = () => {
                 {users.subscription?.startDate
                   ? new Date(users.subscription.startDate).toLocaleDateString()
                   : "-"}
-</span>
+              </span>
             </div>
 
             <div className="flex justify-between">
@@ -362,6 +621,74 @@ const index = () => {
 
           </CardContent>
         </Card>
+        {isOwnProfile && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Active Sessions</CardTitle>
+            </CardHeader>
+
+            <CardContent>
+              {sessionsLoading ? (
+                <div className="text-center py-6">
+                  Loading active sessions...
+                </div>
+              ) : activeSessions.length === 0 ? (
+                <div className="text-center text-gray-500 py-6">
+                  No active sessions found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {activeSessions.map((session: any) => (
+                    <div
+                      key={session.sessionId}
+                      className="border rounded-lg p-4"
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between gap-4">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold text-gray-800">
+                            {session.deviceType} - {session.browser}
+                          </h3>
+
+                          <p className="text-sm text-gray-600">
+                            OS: {session.operatingSystem}
+                          </p>
+
+                          <p className="text-sm text-gray-600">
+                            IP Address: {session.ipAddress}
+                          </p>
+
+                          <p>
+                            Location: {session.location || "Unknown"}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Login:{" "}
+                            {new Date(session.loginTime).toLocaleString()}
+                          </p>
+
+                          <p className="text-sm text-gray-600">
+                            Last Activity:{" "}
+                            {new Date(session.lastActivity).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="flex items-start">
+                          <Button
+                            variant="destructive"
+                            onClick={() =>
+                              handleRevokeSession(session.sessionId)
+                            }
+                          >
+                            Revoke
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -376,7 +703,7 @@ const index = () => {
               </CardContent>
             </Card>
           </div>
-          <div className="space-y-6">
+          <div className="w-full space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Top Tags</CardTitle>
@@ -401,6 +728,157 @@ const index = () => {
                 </div>
               </CardContent>
             </Card>
+            <Card className="w-full mt-6">
+              <CardHeader>
+                <CardTitle>Reputation Activity</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                {reputationLoading ? (
+                  <div className="text-center py-6">
+                    Loading reputation activity...
+                  </div>
+                ) : reputationHistory.length === 0 ? (
+                  <div className="text-center text-gray-500 py-6">
+                    No reputation activity found.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {reputationHistory.map((activity: any) => (
+                      <div
+                        key={activity._id}
+                        className="flex items-center justify-between border-b pb-3"
+                      >
+                        <div>
+                          <p className="font-medium text-gray-800">
+                            {activity.reason}
+                          </p>
+
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(activity.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`font-semibold ${
+                            activity.type === "earned"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {activity.type === "earned" ? "+" : "-"}
+                          {activity.amount}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          <div className="mt-6">
+            <Card className="w-full">
+              <CardHeader>
+                <CardTitle>User Posts</CardTitle>
+              </CardHeader>
+
+              <CardContent>
+                {postsLoading ? (
+                  <div className="text-center py-6">Loading posts...</div>
+                ) : userPosts.length === 0 ? (
+                  <div className="text-center text-gray-500 py-6">
+                    No posts found.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {userPosts.map((post: any) => (
+                          <div
+                            id={post._id}
+                            key={post._id}
+                            ref={(el) => {
+                              postRefs.current[post._id] = el;
+                            }}
+                            className={`border rounded-lg p-4 transition-all duration-300 ${
+                              activePostId === post._id
+                                ? "border-orange-500 bg-orange-50 shadow-lg"
+                                : "bg-white"
+                            }`}
+                          >
+                            {highlightPostId === post._id && (
+                              <div className="mb-2 text-sm font-medium text-blue-600">
+                                {notificationType === "like"
+                                  ? "❤️ Someone liked this post"
+                                  : "💬 Someone commented on this post"}
+                              </div>
+                            )}
+                            <p className="font-medium">{post.content}</p>
+
+                            {post.image && (
+                              <img
+                                src={post.image}
+                                className="w-full rounded-lg mt-3"
+                              />
+                            )}
+
+                            {post.codeSnippet && (
+                              <pre className="bg-gray-100 p-3 rounded mt-3 overflow-x-auto">
+                                <code>{post.codeSnippet}</code>
+                              </pre>
+                            )}
+
+                            <div className="flex gap-2 mt-3 flex-wrap">
+                              {post.hashtags?.map((tag: string) => (
+                                <span key={tag} className="text-blue-600 text-sm">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="flex gap-5 mt-3 text-sm text-gray-600">
+                              <span>❤️ {post.likes?.length || 0}</span>
+                              <span>💬 {post.comments?.length || 0}</span>
+                              <span>🔖 {post.bookmarks?.length || 0}</span>
+                            </div>
+                            {/* Comments */}
+                            {post.comments?.length > 0 && (
+                              <div className="mt-4 border-t pt-3">
+                                <h4 className="text-sm font-semibold mb-2">
+                                  Comments ({post.comments.length})
+                                </h4>
+
+                                <div className="space-y-2">
+                                  {post.comments.map((comment: any) => (
+                                    <div
+                                      key={comment._id}
+                                      className={`p-2 rounded-md transition-all ${
+                                        router.query.commentId?.toString() === comment._id?.toString()
+                                          ? "bg-yellow-200 border border-yellow-500"
+                                          : "bg-gray-100"
+                                      }`}
+                                    >
+                                      <p className="text-sm">
+                                        <span className="font-semibold">
+                                          {comment.userName}
+                                        </span>
+                                      </p>
+
+                                      <p className="text-sm text-gray-700">
+                                        {comment.comment}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-500 mt-2">
+                              {new Date(post.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      )}
+              </CardContent>
+            </Card>
+          </div>
           </div>
         </div>
       </div>

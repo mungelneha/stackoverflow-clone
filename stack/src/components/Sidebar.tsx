@@ -18,8 +18,14 @@ import {
 import Link from "next/link";
 import React from "react";
 import { Badge } from "./ui/badge";
+import { useAuth } from "@/lib/AuthContext";
+import { useTranslations } from "next-intl";
+
 
 const Sidebar = ({ isopen }: any) => {
+  const { user } = useAuth();
+  const t = useTranslations("Sidebar");
+
   return (
     <div>
       <aside
@@ -36,7 +42,7 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Home className="w-4 h-4 mr-2 lg:mr-3" />
-                Home
+                {t("home")}
               </Link>
             </li>
             <li>
@@ -45,7 +51,7 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <MessageSquareIcon className="w-4 h-4 mr-2 lg:mr-3" />
-                Questions
+                {t("questions")}
               </Link>
             </li>
             <li>
@@ -54,9 +60,9 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Bot className="w-4 h-4 mr-2 lg:mr-3" />
-                AI Assist
+                {t("aiAssist")}
                 <Badge variant="secondary" className="ml-auto text-xs">
-                  Labs
+                  {t("new")}
                 </Badge>
               </Link>
             </li>
@@ -66,7 +72,7 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Tag className="w-4 h-4 mr-2 lg:mr-3" />
-                Tags
+                {t("tags")}
               </Link>
             </li>
             <li>
@@ -75,16 +81,25 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Users className="w-4 h-4 mr-2 lg:mr-3" />
-                Users
+                {t("users")}
               </Link>
             </li>
             <li>
               <Link
-                href="#"
+                href="/community"
+                className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
+              >
+                <MessageSquare className="w-4 h-4 mr-2 lg:mr-3" />
+                {t("community")}
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/community/saved"
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Bookmark className="w-4 h-4 mr-2 lg:mr-3" />
-                Saves
+                {t("saves")}
               </Link>
             </li>
             <li>
@@ -93,12 +108,12 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Trophy className="w-4 h-4 mr-2 lg:mr-3" />
-                Challenges
+                {t("challenges")}
                 <Badge
                   variant="secondary"
                   className="ml-auto text-xs bg-orange-100 text-orange-800"
                 >
-                  NEW
+                  {t("new")}
                 </Badge>
               </Link>
             </li>
@@ -108,7 +123,7 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <MessageSquare className="w-4 h-4 mr-2 lg:mr-3" />
-                Chat
+                {t("chat")}
               </Link>
             </li>
             <li>
@@ -117,7 +132,7 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <FileText className="w-4 h-4 mr-2 lg:mr-3" />
-                Articles
+                {t("articles")}
               </Link>
             </li>
 
@@ -127,9 +142,44 @@ const Sidebar = ({ isopen }: any) => {
                 className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
               >
                 <Building className="w-4 h-4 mr-2 lg:mr-3" />
-                Companies
+                {t("companies")}
               </Link>
             </li>
+            {user?.role === "admin" && (
+            <>
+              <hr className="my-4" />
+
+              <li>
+                <Link
+                  href="/admin"
+                  className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
+                >
+                  <Crown className="w-4 h-4 mr-2 lg:mr-3 text-red-600" />
+                  {t("adminDashboard")}
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href="/admin/reports"
+                  className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
+                >
+                  <FileText className="w-4 h-4 mr-2 lg:mr-3 text-red-600" />
+                  {t("reports")}
+                </Link>
+              </li>
+
+              <li>
+                <Link
+                  href="/admin/users"
+                  className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
+                >
+                  <Users className="w-4 h-4 mr-2 lg:mr-3 text-red-600" />
+                  {t("manageUsers")}
+                </Link>
+              </li>
+            </>
+)}
             <hr className="my-4" />
               <li>
                 <Link
@@ -137,7 +187,7 @@ const Sidebar = ({ isopen }: any) => {
                   className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
                 >
                   <Crown className="w-4 h-4 mr-2 lg:mr-3 text-yellow-500" />
-                  Subscription
+                  {t("subscription")}
                 </Link>
               </li>
 
@@ -147,7 +197,7 @@ const Sidebar = ({ isopen }: any) => {
                   className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
                 >
                   <CreditCard className="w-4 h-4 mr-2 lg:mr-3 text-green-600" />
-                  Payment History
+                  {t("paymentHistory")}
                 </Link>
               </li>
 
@@ -157,7 +207,7 @@ const Sidebar = ({ isopen }: any) => {
                   className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
                 >
                   <FileDown className="w-4 h-4 mr-2 lg:mr-3 text-blue-600" />
-                  Download Invoice
+                  {t("downloadInvoice")}
                 </Link>
               </li>
 
@@ -167,7 +217,7 @@ const Sidebar = ({ isopen }: any) => {
                   className="flex items-center px-2 py-2 text-gray-700 hover:bg-gray-100 rounded text-sm"
                 >
                   <ArrowUpCircle className="w-4 h-4 mr-2 lg:mr-3 text-orange-500" />
-                  Upgrade Plan
+                  {t("upgradePlan")}
                 </Link>
               </li>
           </ul>

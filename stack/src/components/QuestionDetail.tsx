@@ -400,6 +400,60 @@ const QuestionDetail = ({ questionId }: any) => {
       toast.error("Failed to delete question");
     }
   };
+  const handleAcceptAnswer = async (answerid: string) => {
+  try {
+    if (!user?._id) {
+      alert("Please login first");
+      return;
+    }
+
+    const response = await axiosInstance.patch(
+      `/question/acceptanswer/${question._id}`,
+      {
+        answerid: answerid,
+        userid: user._id,
+      }
+    );
+
+    setquestion(response.data.data);
+    setanswer(response.data.data.answer);
+
+    alert("Answer accepted successfully! +10 reputation added.");
+  } catch (error: any) {
+    console.log(error);
+
+    alert(
+      error?.response?.data?.message ||
+        "Failed to accept answer"
+    );
+  }
+};
+const handleAnswerVote = async (answerid: string) => {
+  try {
+    if (!user?._id) {
+      alert("Please login first");
+      return;
+    }
+
+    const response = await axiosInstance.patch(
+      `/answer/vote/${question._id}`,
+      {
+        answerid: answerid,
+        userid: user._id,
+        value: "upvote",
+      }
+    );
+
+    setquestion(response.data.data);
+    setanswer(response.data.data.answer);
+  } catch (error: any) {
+    console.log(error);
+    alert(
+      error?.response?.data?.message ||
+        "Failed to vote answer"
+    );
+  }
+};
 
   return (
     <div className="max-w-5xl">
@@ -605,6 +659,14 @@ const QuestionDetail = ({ questionId }: any) => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleAnswerVote(ans._id)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          👍 {ans.upvote?.length || 0}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="text-gray-600 hover:text-gray-800"
                         >
                           <Share className="w-4 h-4 mr-1" />
@@ -628,6 +690,22 @@ const QuestionDetail = ({ questionId }: any) => {
                             <Trash className="w-4 h-4 mr-1" />
                             Delete
                           </Button>
+                        )}
+                        {question.userid === user?._id && !ans.isAccepted && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAcceptAnswer(ans._id)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            ✓ Accept Answer
+                          </Button>
+                        )}
+
+                        {ans.isAccepted && (
+                          <span className="text-green-600 font-semibold text-sm flex items-center">
+                            ✓ Accepted Answer
+                          </span>
                         )}
                       </div>
                       <div className="flex items-center gap-2 text-sm">

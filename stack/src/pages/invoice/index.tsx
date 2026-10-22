@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import Mainlayout from "@/layout/Mainlayout";
 import axiosInstance from "@/lib/axiosinstance";
+import { useTranslations } from "next-intl";
 
 const Invoice = () => {
+  const t = useTranslations("Invoice");
+
   const [invoices, setInvoices] = useState([]);
 
   useEffect(() => {
@@ -34,17 +37,17 @@ const Invoice = () => {
     <Mainlayout>
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">
-          Download Invoice
+          {t("downloadInvoice")}
         </h1>
 
         <table className="w-full border">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-3">Invoice</th>
-              <th className="border p-3">Plan</th>
-              <th className="border p-3">Amount</th>
-              <th className="border p-3">Status</th>
-              <th className="border p-3">Action</th>
+              <th className="border p-3">{t("invoice")}</th>
+              <th className="border p-3">{t("plan")}</th>
+              <th className="border p-3">{t("amount")}</th>
+              <th className="border p-3">{t("status")}</th>
+              <th className="border p-3">{t("action")}</th>
             </tr>
           </thead>
 
@@ -74,7 +77,7 @@ const Invoice = () => {
                     }
                     className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
                   >
-                    Download PDF
+                    {t("downloadPdf")}
                   </button>
                 </td>
               </tr>

@@ -5,11 +5,13 @@ import axiosInstance from "@/lib/axiosinstance";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 export default function Questions() {
   const [question, setQuestion] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const t = useTranslations();
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -42,26 +44,26 @@ export default function Questions() {
       <main className="min-w-0 p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h1 className="text-xl lg:text-2xl font-semibold">
-            Top Questions
+            {t("Questions.topQuestions")}
           </h1>
 
           <button
             onClick={() => router.push("/ask")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium"
           >
-            Ask Question
+            {t("Questions.askQuestion")}
           </button>
         </div>
 
         <div className="mb-4">
           <span className="text-gray-600">
-            {question.length} Questions
+            {question.length} {t("Questions.questions")}
           </span>
         </div>
 
         {question.length === 0 ? (
           <div className="text-center text-gray-500 mt-10">
-            No question found.
+            {t("Questions.noQuestions")}
           </div>
         ) : (
           <div className="space-y-4">
@@ -76,7 +78,10 @@ export default function Questions() {
                       <div className="font-medium">
                         {question.upvote.length}
                       </div>
-                      <div className="text-xs">votes</div>
+
+                      <div className="text-xs">
+                        {t("Questions.votes")}
+                      </div>
                     </div>
 
                     <div className="text-center">
@@ -92,8 +97,8 @@ export default function Questions() {
 
                       <div className="text-xs">
                         {question.noofanswer === 1
-                          ? "answer"
-                          : "answers"}
+                          ? t("Questions.answer")
+                          : t("Questions.answers")}
                       </div>
                     </div>
                   </div>
@@ -140,7 +145,7 @@ export default function Questions() {
                         </Link>
 
                         <span>
-                          asked{" "}
+                          {t("Questions.asked")}{" "}
                           {new Date(
                             question.askedon
                           ).toLocaleDateString()}

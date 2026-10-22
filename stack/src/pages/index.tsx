@@ -7,6 +7,8 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/AuthContext";
+import { useTranslations } from "next-intl";
+
 const questions = [
   {
     id: 1,
@@ -68,17 +70,20 @@ const questions = [
     timeAgo: "25 mins ago",
   },
 ];
+
 export default function Home() {
   const [question, setquestion] = useState<any>(null);
   const [loading, setloading] = useState(true);
   const [search, setSearch] = useState("");
   const router = useRouter();
   const { user } = useAuth();
+  const t = useTranslations();
 
   const isPremium =
     user?.subscription?.plan === "Bronze" ||
     user?.subscription?.plan === "Silver" ||
     user?.subscription?.plan === "Gold";
+
   useEffect(() => {
     const fetchquestion = async () => {
       try {
@@ -90,8 +95,10 @@ export default function Home() {
         setloading(false);
       }
     };
+
     fetchquestion();
   }, []);
+
   if (loading) {
     return (
       <Mainlayout>
@@ -99,10 +106,13 @@ export default function Home() {
       </Mainlayout>
     );
   }
+
   if (!question || question.length === 0) {
     return (
       <Mainlayout>
-        <div className="text-center text-gray-500 mt-4">No question found.</div>
+        <div className="text-center text-gray-500 mt-4">
+          {t("Questions.noQuestions")}
+        </div>
       </Mainlayout>
     );
   }
@@ -111,149 +121,180 @@ export default function Home() {
     <Mainlayout>
       <main className="min-w-0 p-4 lg:p-6 ">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h1 className="text-xl lg:text-2xl font-semibold">Top Questions</h1>
+          <h1 className="text-xl lg:text-2xl font-semibold">
+            {t("Questions.topQuestions")}
+          </h1>
+
           <div className="my-4">
             <Input
-              placeholder="Search questions..."
+              placeholder={t("Questions.searchQuestions")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-md"
             />
+
             {isPremium && (
               <div className="flex gap-2 mt-3">
-                <Input placeholder="Filter by Author" />
-                <Input placeholder="Filter by Tag" />
+                <Input placeholder={t("Questions.filterByAuthor")} />
+                <Input placeholder={t("Questions.filterByTag")} />
                 <Input type="date" />
               </div>
             )}
           </div>
+
           <button
             onClick={() => router.push("/ask")}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium whitespace-nowrap"
           >
-            Ask Question
+            {t("Questions.askQuestion")}
           </button>
         </div>
+
         <div className="w-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 text-sm gap-2 sm:gap-4">
-            <span className="text-gray-600">{question.length} questions</span>
+            <span className="text-gray-600">
+              {question.length} {t("Questions.questions")}
+            </span>
+
             <div className="flex flex-wrap gap-1 sm:gap-2">
               <button className="px-2 sm:px-3 py-1 bg-gray-200 text-gray-700 rounded text-xs sm:text-sm">
-                Newest
+                {t("Questions.newest")}
               </button>
+
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
-                Active
+                {t("Questions.active")}
               </button>
+
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded flex items-center text-xs sm:text-sm">
-                Bountied
+                {t("Questions.bountied")}
+
                 <Badge variant="secondary" className="ml-1 text-xs">
                   25
                 </Badge>
               </button>
+
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
-                Unanswered
+                {t("Questions.unanswered")}
               </button>
+
               <button className="px-2 sm:px-3 py-1 text-gray-600 hover:bg-gray-100 rounded text-xs sm:text-sm">
-                More ▼
+                {t("Questions.more")} ▼
               </button>
+
               <button className="px-2 sm:px-3 py-1 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded ml-auto text-xs sm:text-sm">
-                🔍 Filter
+                🔍 {t("Questions.filter")}
               </button>
             </div>
           </div>
+
           <div className="space-y-4">
             {question
               .filter((q: any) => {
-                  if (search.trim() === "") return true;
+                if (search.trim() === "") return true;
 
-                  return (
-                    q.questiontitle
-                      .toLowerCase()
-                      .includes(search.toLowerCase()) ||
-
-                    q.questionbody
-                      .toLowerCase()
-                      .includes(search.toLowerCase()) ||
-
-                    q.questiontags.some((tag: string) =>
-                       tag.toLowerCase().includes(search.toLowerCase())
-                    )
-                  );
-                })
+                return (
+                  q.questiontitle
+                    .toLowerCase()
+                    .includes(search.toLowerCase()) ||
+                  q.questionbody
+                    .toLowerCase()
+                    .includes(search.toLowerCase()) ||
+                  q.questiontags.some((tag: string) =>
+                    tag.toLowerCase().includes(search.toLowerCase())
+                  )
+                );
+              })
               .map((question: any) => (
-              <div key={question._id} className="border-b border-gray-200 pb-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex sm:flex-col items-center sm:items-center text-sm text-gray-600 sm:w-16 lg:w-20 gap-4 sm:gap-2">
-                    <div className="text-center">
-                      <div className="font-medium">
-                        {question.upvote.length}
-                      </div>
-                      <div className="text-xs">votes</div>
-                    </div>
-                    <div className="text-center">
-                      <div
-                        className={`font-medium ${
-                          (question.answer?.length || 0) > 0
-                            ? "text-green-600 bg-green-100 px-2 py-1 rounded"
-                            : ""
-                        }`}
-                      >
-                        {question.noofanswer}
-                      </div>
-                      <div className="text-xs">
-                        {question.noofanswer === 1
-                          ? "answer"
-                          : "answers"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/question/${question._id}`}
-                      className="text-blue-600 hover:text-blue-800 text-base lg:text-lg font-medium mb-2 block"
-                    >
-                      {question.questiontitle}
-                    </Link>
-                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                      {question.questionbody}
-                    </p>
+                <div
+                  key={question._id}
+                  className="border-b border-gray-200 pb-4"
+                >
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex sm:flex-col items-center sm:items-center text-sm text-gray-600 sm:w-16 lg:w-20 gap-4 sm:gap-2">
+                      <div className="text-center">
+                        <div className="font-medium">
+                          {question.upvote.length}
+                        </div>
 
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                      <div className="flex flex-wrap gap-1">
-                        {question.questiontags.map((tag: any) => (
-                          <div key={tag}>
-                            <Badge
-                              variant="secondary"
-                              className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
-                            >
-                              {tag}
-                            </Badge>
-                          </div>
-                        ))}
+                        <div className="text-xs">
+                          {t("Questions.votes")}
+                        </div>
                       </div>
 
-                      <div className="flex items-center text-xs text-gray-600 flex-shrink-0">
-                        <Link
-                          href={`/users/${question.userid}`}
-                          className="flex items-center"
+                      <div className="text-center">
+                        <div
+                          className={`font-medium ${
+                            (question.answer?.length || 0) > 0
+                              ? "text-green-600 bg-green-100 px-2 py-1 rounded"
+                              : ""
+                          }`}
                         >
-                          <Avatar className="w-4 h-4 mr-1">
-                            <AvatarFallback className="text-xs">
-                              {question.userposted[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-blue-600 hover:text-blue-800 mr-1">
-                            {question.userposted}
-                          </span>
-                        </Link>
+                          {question.noofanswer}
+                        </div>
 
-                        <span>asked {new Date(question.askedon).toLocaleDateString()}</span>
+                        <div className="text-xs">
+                          {question.noofanswer === 1
+                            ? t("Questions.answer")
+                            : t("Questions.answers")}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/question/${question._id}`}
+                        className="text-blue-600 hover:text-blue-800 text-base lg:text-lg font-medium mb-2 block"
+                      >
+                        {question.questiontitle}
+                      </Link>
+
+                      <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                        {question.questionbody}
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div className="flex flex-wrap gap-1">
+                          {question.questiontags.map((tag: any) => (
+                            <div key={tag}>
+                              <Badge
+                                variant="secondary"
+                                className="text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
+                              >
+                                {tag}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center text-xs text-gray-600 flex-shrink-0">
+                          <Link
+                            href={`/users/${question.userid}`}
+                            className="flex items-center"
+                          >
+                            <Avatar className="w-4 h-4 mr-1">
+                              <AvatarFallback className="text-xs">
+                                {question.userposted[0]}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <span className="text-blue-600 hover:text-blue-800 mr-1">
+                              {question.userposted}
+                            </span>
+                          </Link>
+
+                          <span>
+                            {t("Questions.asked")}{" "}
+                            {new Date(
+                              question.askedon
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+
             {question.filter((q: any) => {
               if (search.trim() === "") return true;
 
@@ -269,9 +310,9 @@ export default function Home() {
                 )
               );
             }).length === 0 && (
-            <div className="text-center text-gray-500 py-10">
-              No matching questions found.
-            </div>
+              <div className="text-center text-gray-500 py-10">
+                {t("Questions.noMatchingQuestions")}
+              </div>
             )}
           </div>
         </div>
