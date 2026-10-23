@@ -26,13 +26,12 @@ const index = () => {
 
         setUsers(res.data.data || []);
       } catch (error: any) {
-        console.error("Users API Error:", error);
-
-        setError(
-          error.response?.data?.message ||
-            t("failedToLoad")
-        );
-      } finally {
+          console.log("Status:", error.response?.status);
+          console.log("Error Message:", error.response?.data);
+          setError(
+            error.response?.data?.message || "Failed to fetch users"
+          );
+        }finally {
         setLoading(false);
       }
     };

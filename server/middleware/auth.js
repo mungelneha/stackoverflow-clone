@@ -68,7 +68,8 @@ const auth = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.log("Auth Error:", error);
+  console.log("AUTH MIDDLEWARE ERROR:", error.name);
+  console.log("AUTH MIDDLEWARE MESSAGE:", error.message);
 
     return res.status(401).json({
       message: "Authentication failed",

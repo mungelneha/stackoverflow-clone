@@ -1,6 +1,15 @@
 import Mainlayout from "@/layout/Mainlayout";
 import axiosInstance from "@/lib/axiosinstance";
-import { Search, Users, Eye, Edit, Trash2, Power, PauseCircle, } from "lucide-react";
+import {
+  Search,
+  Users,
+  Eye,
+  Edit,
+  Trash2,
+  Power,
+  PauseCircle,
+  Crown,
+} from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -194,6 +203,51 @@ const AdminUsers = () => {
       toast.error("Failed to update suspend status");
     }
   };
+  
+  // Make Admin / Remove Admin
+  const handleToggleRole = async (
+    userId: string,
+    currentRole: string
+  ) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+
+    const confirmed = window.confirm(
+      `Are you sure you want to change this user's role to ${newRole === "admin" ? "Admin" : "User"}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await axiosInstance.patch(`/user/admin/${userId}`, {
+        role: newRole,
+      });
+
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user._id === userId
+            ? { ...user, role: newRole }
+            : user
+        )
+      );
+
+      toast.success(
+        newRole === "admin"
+          ? "User is now an Admin"
+          : "Admin role removed successfully"
+      );
+    } catch (error: any) {
+      console.error(
+        "ROLE UPDATE ERROR:",
+        error.response?.data || error
+      );
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to update user role"
+      );
+    }
+  };
+
   // Search
   const filteredUsers = users.filter((user) => {
     const searchText = search.toLowerCase();

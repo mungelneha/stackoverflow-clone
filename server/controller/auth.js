@@ -1057,20 +1057,15 @@ export const adminGetUserById = async (
    ADMIN UPDATE USER
 ================================ */
 
-export const adminUpdateUser = async (
-  req,
-  res
-) => {
+
+/* ================================
+   ADMIN UPDATE USER
+================================ */
+
+export const adminUpdateUser = async (req, res) => {
   try {
     const { id } = req.params;
-
-    const {
-      name,
-      email,
-      phone,
-      role,
-      status,
-    } = req.body;
+    const { name, email, phone, role, status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -1088,38 +1083,70 @@ export const adminUpdateUser = async (
       });
     }
 
-    foundUser.name =
-      name ?? foundUser.name;
+    // Validate role
+    if (
+      role !== undefined &&
+      !["user", "admin"].includes(role)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
 
-    foundUser.email =
-      email ?? foundUser.email;
+    // Prevent changing your own role
+    const currentUserId = req.userid?.toString();
+    const targetUserId = foundUser._id.toString();
 
-    foundUser.phone =
-      phone ?? foundUser.phone;
+    if (
+      role !== undefined &&
+      currentUserId &&
+      currentUserId === targetUserId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot change your own role",
+      });
+    }
 
-    foundUser.role =
-      role ?? foundUser.role;
+    // Prevent removing the last admin
+    if (role === "user" && foundUser.role === "admin") {
+      const adminCount = await user.countDocuments({
+        role: "admin",
+      });
 
-    foundUser.status =
-      status ?? foundUser.status;
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot remove the last admin",
+        });
+      }
+    }
 
-    const updatedUser =
-      await foundUser.save();
+    // Update user details
+    foundUser.name = name ?? foundUser.name;
+    foundUser.email = email ?? foundUser.email;
+    foundUser.phone = phone ?? foundUser.phone;
+    foundUser.role = role ?? foundUser.role;
+    foundUser.status = status ?? foundUser.status;
 
-    res.status(200).json({
+    const updatedUser = await foundUser.save();
+
+    return res.status(200).json({
       success: true,
       message: "User updated successfully",
       data: updatedUser,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Admin Update User Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Something went wrong",
     });
   }
 };
+
 
 /* ================================
    BLOCK / ACTIVATE USER

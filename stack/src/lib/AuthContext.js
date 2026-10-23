@@ -111,10 +111,10 @@ export const AuthProvider = ({ children }) => {
         }
       );
 
-      console.log(
-        "LOGIN API RESPONSE:",
-        res.data
-      );
+      console.log("LOGIN RESPONSE KEYS:", Object.keys(res.data || {}));
+      console.log("LOGIN DATA KEYS:", Object.keys(res.data?.data || {}));
+      console.log("TOP LEVEL TOKEN EXISTS:", !!res.data?.token);
+      console.log("DATA TOKEN EXISTS:", !!res.data?.data?.token);
 
       // =========================
       // NEW DEVICE
