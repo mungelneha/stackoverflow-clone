@@ -1913,23 +1913,14 @@ export const verifyDeviceOTP = async (
       token,
     });
   } catch (error) {
-    console.log(
-      "================================"
-    );
-
-    console.log(
+    console.error(
       "VERIFY DEVICE OTP ERROR:",
-      error
-    );
-
-    console.log(
-      "================================"
+      error.message
     );
 
     return res.status(500).json({
       success: false,
-      message:
-        "OTP verification failed",
+      message: "OTP verification failed",
     });
   }
 };
