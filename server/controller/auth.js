@@ -14,18 +14,38 @@ import Reputation from "../models/reputation.js";
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const sendBrevoEmail = async ({
+  to,
+  subject,
+  html,
+  text,
+}) => {
+  const payload = {
+    sender: {
+      name: process.env.BREVO_SENDER_NAME,
+      email: process.env.BREVO_SENDER_EMAIL,
+    },
+    to: [{ email: to }],
+    subject,
+  };
+
+  if (html) payload.htmlContent = html;
+  if (text) payload.textContent = text;
+
+  const response = await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    payload,
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
 
 /* ================================
    LOGIN LOCATION HELPER
@@ -102,8 +122,7 @@ const sendNewDeviceLoginNotification = async ({
   loginTime,
 }) => {
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await sendBrevoEmail({
       to: email,
       subject: "New Device Login Alert",
       html: `
@@ -391,8 +410,7 @@ export const Login = async (req, res) => {
         attempts: 0,
       });
 
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+      await sendBrevoEmail({
         to: exisitinguser.email,
         subject: "New Device Login Verification",
         html: `
@@ -737,8 +755,7 @@ export const forgotPassword = async (req, res) => {
 
     await existingUser.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await sendBrevoEmail({
       to: existingUser.email,
       subject: "Password Reset",
       text: `Your new password is: ${newPassword}`,
@@ -1342,8 +1359,7 @@ export const sendFrenchOtp = async (
 
     await existingUser.save();
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    await sendBrevoEmail({
       to: existingUser.email,
       subject:
         "French Language Verification OTP",

@@ -6,17 +6,36 @@ import User from "../models/auth.js";
 import Payment from "../models/payment.js";
 import PDFDocument from "pdfkit";
 import Invoice from "../models/invoice.js";
-import nodemailer from "nodemailer";
-console.log("Stripe Key:", process.env.STRIPE_SECRET_KEY);
+import axios from "axios";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const sendBrevoEmail = async ({ to, subject, html, text }) => {
+  const payload = {
+    sender: {
+      name: process.env.BREVO_SENDER_NAME,
+      email: process.env.BREVO_SENDER_EMAIL,
+    },
+    to: [{ email: to }],
+    subject,
+  };
+
+  if (html) payload.htmlContent = html;
+  if (text) payload.textContent = text;
+
+  const response = await axios.post(
+    "https://api.brevo.com/v3/smtp/email",
+    payload,
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
 
 export const createCheckoutSession = async (req, res) => {
   try {
@@ -41,8 +60,9 @@ export const createCheckoutSession = async (req, res) => {
         },
       ],
       success_url:
-        "http://localhost:3000/payment-success?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "http://localhost:3000/pricing",
+        "https://stackoverflow-clone-pi.vercel.app/payment-success?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url:
+        "https://stackoverflow-clone-pi.vercel.app/pricing",
     });
     res.status(200).json({
       id: session.id,
@@ -97,8 +117,7 @@ export const verifyPayment = async (req, res) => {
   const user = await User.findById(userId);
 
   try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+    const info = await sendBrevoEmail({
       to: user.email,
       subject: "Payment Confirmation - CodeQuest",
       html: `
@@ -126,7 +145,7 @@ export const verifyPayment = async (req, res) => {
       `,
     });
 
-    console.log("✅ Email Sent:", info.response);
+    console.log("✅ Email Sent:", info);
   } catch (err) {
     console.log("❌ Email Error:", err);
   }
