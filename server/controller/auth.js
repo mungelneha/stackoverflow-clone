@@ -217,9 +217,7 @@ export const Signup = async (req, res) => {
       $or: [{ email }, { phone }],
     });
 
-    console.log(req.body);
-    console.log(exisitinguser);
-
+    
     if (exisitinguser) {
       return res.status(400).json({
         message: "User already exists",

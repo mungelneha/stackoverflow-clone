@@ -397,7 +397,7 @@ const QuestionDetail = ({ questionId }: any) => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to delete question");
+      toast.error("Failed to delete answers");
     }
   };
   const handleAcceptAnswer = async (answerid: string) => {
