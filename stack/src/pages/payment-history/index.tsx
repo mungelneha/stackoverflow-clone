@@ -27,16 +27,23 @@ export default function PaymentHistory() {
     }
   };
 
-  const downloadInvoice = async (paymentId: string) => {
-    try {
-      window.open(
-        `http://localhost:5000/payment/invoice/${paymentId}`,
-        "_blank"
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  
+
+const downloadInvoice = (paymentId: string) => {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  if (!backendUrl) {
+    console.error("Backend URL is missing");
+    return;
+  }
+
+  window.open(
+    `${backendUrl}/payment/invoice/${paymentId}`,
+    "_blank"
+  );
+};
+
+
 
   return (
     <Mainlayout>
