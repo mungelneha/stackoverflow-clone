@@ -37,10 +37,22 @@ export default function PricingPage() {
 
   const makePayment = async (plan: any) => {
     try {
-      const stripe = await loadStripe(
-        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-      );
+      const publishableKey =
+        process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
+      console.log("Stripe key available:", !!publishableKey);
+
+      if (!publishableKey) {
+        alert("Stripe key missing. Check .env.local");
+        return;
+      }
+
+      const stripe = await loadStripe(publishableKey);
+
+      if (!stripe) {
+        alert("Stripe initialization failed.");
+        return;
+      }
       const user = JSON.parse(
         localStorage.getItem("user") || "{}"
       );
