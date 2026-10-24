@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axiosInstance from "@/lib/axiosinstance";
 
 const EditUser = () => {
   const router = useRouter();
@@ -28,13 +28,8 @@ const EditUser = () => {
           ? JSON.parse(storedUser).token
           : null;
 
-        const response = await axios.get(
-          `http://localhost:5000/user/admin/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        const response = await axiosInstance.get(
+          `/user/admin/${id}`
         );
 
         console.log("User data:", response.data);
@@ -85,14 +80,9 @@ const EditUser = () => {
         ? JSON.parse(storedUser).token
         : null;
 
-      const response = await axios.patch(
-        `http://localhost:5000/user/admin/${id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await axiosInstance.patch(
+        `/user/admin/${id}`,
+        formData
       );
 
       console.log("Updated user:", response.data);
