@@ -745,15 +745,21 @@ export const forgotPassword = async (req, res) => {
 
     const newPassword = generatePassword();
 
-    const hashedPassword = await bcrypt.hash(
-      newPassword,
-      12
-    );
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     existingUser.password = hashedPassword;
     existingUser.lastForgotPasswordRequest = today;
 
     await existingUser.save();
+
+    const savedUser = await user.findById(existingUser._id);
+
+    const passwordMatches = await bcrypt.compare(
+      newPassword,
+      savedUser.password
+    );
+
+    console.log("Password reset saved correctly:", passwordMatches);
 
     await sendBrevoEmail({
       to: existingUser.email,
