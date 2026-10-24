@@ -106,11 +106,11 @@ const index = () => {
     try {
       setOtpLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/user/verify-device-otp",
+      const res = await axiosInstance.post(
+        "/user/verify-device-otp",
         {
-          verificationId: verificationId,
-          otp: otp,
+          verificationId,
+          otp,
         }
       );
 
