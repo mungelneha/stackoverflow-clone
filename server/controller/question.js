@@ -89,58 +89,45 @@ export const getallquestion = async (req, res) => {
 };
 
 export const deletequestion = async (req, res) => {
-  const { id: _id } = req.params;
+  const { id } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(_id)) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).json({
+      success: false,
       message: "Question unavailable",
     });
   }
 
   try {
-    const existingQuestion = await question.findById(_id);
+    const existingQuestion = await question.findById(id);
 
     if (!existingQuestion) {
       return res.status(404).json({
+        success: false,
         message: "Question not found",
       });
     }
 
-    const questionOwner = await user.findById(
-      existingQuestion.userid
-    );
-
-    await question.findByIdAndDelete(_id);
-
-    if (questionOwner) {
-      questionOwner.reputation = Math.max(
-        0,
-        questionOwner.reputation - 10
-      );
-
-      await questionOwner.save();
-
-      await Reputation.create({
-        user: existingQuestion.userid,
-        amount: 10,
-        type: "lost",
-        reason:
-          "Question removed by admin for guideline violation",
-        source: "admin_removed",
-        relatedContent: _id,
+    // Only the question owner can delete their own question
+    if (String(existingQuestion.userid) !== String(req.userid)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can delete only your own question",
       });
     }
 
-    res.status(200).json({
-      message:
-        "Question removed successfully and 10 reputation deducted",
+    await question.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Question deleted successfully",
     });
   } catch (error) {
-    console.log(error);
+    console.error("Delete question error:", error);
 
-    res.status(500).json({
-      message: "Something went wrong",
-      error: error.message,
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete question",
     });
   }
 };
